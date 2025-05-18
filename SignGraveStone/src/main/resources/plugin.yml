@@ -1,0 +1,6 @@
+name: SignGraveStone
+version: '1.0.0'
+main: org.shyni.signGraveStone.SignGraveStone
+api-version: '1.21'
+authors: [ Shyni ]
+description: Grave stone plugin that places a sign on death
