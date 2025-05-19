@@ -1,0 +1,23 @@
+# Add any block that signs are allowed to replace
+
+replaceable-blocks:
+  - GRASS
+  - TALL_GRASS
+  - FERN
+  - LARGE_FERN
+  - DEAD_BUSH
+  - PINK_PETALS
+  - SNOW
+  - SWEET_BERRY_BUSH
+  - SEAGRASS
+  - TALL_SEAGRASS
+  - SMALL_DRIPLEAF
+  - BIG_DRIPLEAF
+  - MOSS_CARPET
+  - AZALEA
+  - FLOWERING_AZALEA
+  - MANGROVE_PROPAGULE
+  - SUNFLOWER
+  - CORNFLOWER
+  - DANDELION
+  - OXEYE_DAISY

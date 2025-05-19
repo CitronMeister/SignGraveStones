@@ -32,18 +32,37 @@ public class PlayerDeathListener implements Listener {
 
         // Check if the block below is solid
         if (!belowBlock.getType().isSolid()) {
-            player.sendMessage(ChatColor.RED + "Couldn't place grave sign - no solid ground below!");
+            SignGraveStone.getInstance().getLogger().info("Couldnt place grave sign - no solid ground below!");
             return;
         }
 
-        // Get the block where the sign will be placed (air block above the belowBlock)
-        Block signBlock = belowBlock.getRelative(BlockFace.UP);
+        // Try to place the sign at the player's death location
+        Block signBlock = deathLocation.getBlock();
 
-        // Check if the sign block is air
-        if (signBlock.getType() != Material.AIR) {
-            player.sendMessage(ChatColor.RED + "Couldn't place grave sign - no space for sign!");
-            return;
+// Loop upward to find a valid spot (up to 5 blocks above)
+        for (int i = 0; i < 5; i++) {
+            Material type = signBlock.getType();
+
+            if (type == Material.AIR || org.shyni.signGraveStone.settings.GraveSettings.getInstance().getReplaceableBlocks().contains(type)) {
+                // Found a place to put the sign — clear it if needed
+                signBlock.setType(Material.AIR);
+                break;
+            } else if (type.name().contains("SIGN")) {
+                // There's already a sign here — go up one block
+                signBlock = signBlock.getRelative(BlockFace.UP);
+            } else {
+                // Block is solid and not replaceable — try next block up
+                signBlock = signBlock.getRelative(BlockFace.UP);
+            }
+
+            // If we've reached an invalid height or hit the build limit, cancel
+            if (signBlock.getY() >= deathLocation.getWorld().getMaxHeight()) {
+                SignGraveStone.getInstance().getLogger().info("Couldn't place grave sign - max height reached!");
+                return;
+            }
         }
+
+
 
         // Set the block to a standing sign
         signBlock.setType(Material.OAK_SIGN);
@@ -118,4 +137,5 @@ public class PlayerDeathListener implements Listener {
         java.time.LocalDate date = java.time.LocalDate.now();
         return String.format("%02d/%02d/%04d", date.getDayOfMonth(), date.getMonthValue(), date.getYear());
     }
+
 }
