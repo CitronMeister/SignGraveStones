@@ -13,6 +13,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.shyni.signGraveStone.SignGraveStone;
+import org.shyni.signGraveStone.settings.DeathMessageManager;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -80,7 +81,7 @@ public class PlayerDeathListener implements Listener {
         String[] signLines = new String[] {
                 ChatColor.BLACK + "R.I.P.",
                 ChatColor.GREEN + player.getName(),
-                ChatColor.YELLOW + shortenDeathMessage(event.getDeathMessage()),
+                ChatColor.YELLOW + DeathMessageManager.getInstance().getCustomMessage(event.getDeathMessage(), player.getName()),
                 ChatColor.RED + getFormattedDate()
         };
 

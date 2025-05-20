@@ -1,0 +1,14 @@
+# Put in death messages without usernames to replace death message
+# Death messages can be found here: https://minecraft.wiki/w/Death_messages
+# Make it short signs do not support that many characters!
+death-messages:
+  fell from a high place: "Took a nasty fall"
+  was slain by: "Slain in combat"
+  was shot by: "Sniped from afar"
+  drowned: "drowned"
+  died: "Passed away"
+  tried to swim in lava: "Took a hot bath"
+  blew up: "Exploded"
+  burned to death: "Burned to a crisp"
+  # This is the default if a custom death message has not been setup in this file it will use this:
+  default: "Met their end"

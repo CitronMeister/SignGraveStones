@@ -1,7 +1,7 @@
 # Add any block that signs are allowed to replace
 
 replaceable-blocks:
-  - GRASS
+  - SHORT_GRASS
   - TALL_GRASS
   - FERN
   - LARGE_FERN
