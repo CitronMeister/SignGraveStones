@@ -1,6 +1,7 @@
 package org.shyni.signGraveStone;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import org.shyni.signGraveStone.listener.PlayerDeathListener;
 
 public final class SignGraveStone extends JavaPlugin {
 

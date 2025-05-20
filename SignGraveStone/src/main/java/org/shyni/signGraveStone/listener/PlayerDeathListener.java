@@ -1,4 +1,4 @@
-package org.shyni.signGraveStone;
+package org.shyni.signGraveStone.listener;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -12,11 +12,10 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.shyni.signGraveStone.SignGraveStone;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 public class PlayerDeathListener implements Listener {
     private final Set<Location> graveSigns = new HashSet<>();
@@ -39,7 +38,7 @@ public class PlayerDeathListener implements Listener {
         // Try to place the sign at the player's death location
         Block signBlock = deathLocation.getBlock();
 
-// Loop upward to find a valid spot (up to 5 blocks above)
+        // Loop upward to find a valid spot (up to 5 blocks above)
         for (int i = 0; i < 5; i++) {
             Material type = signBlock.getType();
 
@@ -104,9 +103,21 @@ public class PlayerDeathListener implements Listener {
     }
 
     private String shortenDeathMessage(String message) {
-        // Remove player name from death message if present
-        return message.replaceAll("[A-Za-z0-9_]{3,16} (was|died)", "").trim();
+        if (message == null || message.isEmpty()) return "";
+
+        Player player = SignGraveStone.getInstance().getServer().getPlayerExact(message.split(" ")[0]);
+        if (player != null) {
+            // Remove exact player name from beginning of the message
+            String name = player.getName();
+            if (message.startsWith(name)) {
+                return message.substring(name.length()).trim();
+            }
+        }
+
+        // Fallback: remove any word at the beginning (up to first space)
+        return message.replaceFirst("^[A-Za-z0-9_]{3,16}\\s+", "").trim();
     }
+
 
     private BlockFace getSignRotation(float yaw) {
         // Convert yaw to nearest BlockFace rotation
