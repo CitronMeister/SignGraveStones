@@ -7,6 +7,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Rotatable;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -15,7 +16,6 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.shyni.signGraveStone.SignGraveStone;
 import org.shyni.signGraveStone.settings.DeathMessageManager;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -75,13 +75,15 @@ public class PlayerDeathListener implements Listener {
 
         // Set the block to a standing sign
         signBlock.setType(Material.OAK_SIGN);
-
+        SignGraveStone.getInstance().getLogger().info("Death Yaw: " + deathLocation.getYaw());
         // Configure the sign's rotation
         BlockData blockData = signBlock.getBlockData();
-        if (blockData instanceof org.bukkit.block.data.type.Sign) {
-            org.bukkit.block.data.type.Sign signData = (org.bukkit.block.data.type.Sign) blockData;
-            signData.setRotation(getSignRotation(deathLocation.getYaw()));
+        if (blockData instanceof org.bukkit.block.data.type.Sign signData) {
+            BlockFace face = getSignRotation(player.getLocation().getYaw());
+            signData.setRotation(face);
             signBlock.setBlockData(signData);
+
+            SignGraveStone.getInstance().getLogger().info("Set sign rotation to: " + face);
         }
 
         // Get the Sign and set its text
@@ -98,7 +100,7 @@ public class PlayerDeathListener implements Listener {
             sign.setLine(i, signLines[i]);
         }
 
-        sign.update();
+        sign.update(true, false);
 
         // Add to our tracked grave signs
         graveSigns.add(signBlock.getLocation());
@@ -112,21 +114,7 @@ public class PlayerDeathListener implements Listener {
         }
     }
 
-    private String shortenDeathMessage(String message) {
-        if (message == null || message.isEmpty()) return "";
 
-        Player player = SignGraveStone.getInstance().getServer().getPlayerExact(message.split(" ")[0]);
-        if (player != null) {
-            // Remove exact player name from beginning of the message
-            String name = player.getName();
-            if (message.startsWith(name)) {
-                return message.substring(name.length()).trim();
-            }
-        }
-
-        // Fallback: remove any word at the beginning (up to first space)
-        return message.replaceFirst("^[A-Za-z0-9_]{3,16}\\s+", "").trim();
-    }
 
 
     private BlockFace getSignRotation(float yaw) {
