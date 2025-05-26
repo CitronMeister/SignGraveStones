@@ -28,12 +28,20 @@ public class PlayerDeathListener implements Listener {
         Player player = event.getEntity();
         Location deathLocation = player.getLocation();
 
-        // Get the block below the player
-        Block belowBlock = deathLocation.getBlock().getRelative(BlockFace.DOWN);
+        Location checkLoc = deathLocation.clone();
+        int minY = checkLoc.getWorld().getMinHeight();
 
-        // Check if the block below is solid
-        if (!belowBlock.getType().isSolid()) {
-            SignGraveStone.getInstance().getLogger().info("Couldnt place grave sign - no solid ground below!");
+        while (checkLoc.getY() > minY) {
+            checkLoc.subtract(0, 1, 0);
+            Block block = checkLoc.getBlock();
+            if (block.getType().isSolid()) {
+                deathLocation = block.getLocation().add(0, 1, 0); // place the sign on top of this
+                break;
+            }
+        }
+
+        if (!deathLocation.getBlock().getRelative(BlockFace.DOWN).getType().isSolid()) {
+            SignGraveStone.getInstance().getLogger().info("Could not find solid ground below to place the sign.");
             return;
         }
 
