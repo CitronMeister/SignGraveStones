@@ -1,5 +1,6 @@
 package org.shyni.signGraveStone.listener;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -7,12 +8,13 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.block.data.Rotatable;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.shyni.signGraveStone.SignGraveStone;
 import org.shyni.signGraveStone.settings.DeathMessageManager;
@@ -26,84 +28,72 @@ public class PlayerDeathListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerDeath(PlayerDeathEvent event) {
         Player player = event.getEntity();
-        Location deathLocation = player.getLocation();
-
-        Location checkLoc = deathLocation.clone();
+        Location[] deathLocation = new Location[]{ player.getLocation()};
+        Location checkLoc = deathLocation[0].clone();
         int minY = checkLoc.getWorld().getMinHeight();
+        String deathMessage = DeathMessageManager.getInstance().getCustomMessage(event.getDeathMessage(), player.getName());
 
-        while (checkLoc.getY() > minY) {
-            checkLoc.subtract(0, 1, 0);
-            Block block = checkLoc.getBlock();
-            if (block.getType().isSolid()) {
-                deathLocation = block.getLocation().add(0, 1, 0); // place the sign on top of this
-                break;
-            }
-        }
 
-        if (!deathLocation.getBlock().getRelative(BlockFace.DOWN).getType().isSolid()) {
+
+        if (!deathLocation[0].getBlock().getRelative(BlockFace.DOWN).getType().isSolid()) {
             SignGraveStone.getInstance().getLogger().info("Could not find solid ground below to place the sign.");
             return;
         }
 
-        // Try to place the sign at the player's death location
-        Block signBlock = deathLocation.getBlock();
 
-        // Loop upward to find a valid spot (up to 5 blocks above)
-        for (int i = 0; i < 5; i++) {
-            Material type = signBlock.getType();
-
-            if (type == Material.AIR || org.shyni.signGraveStone.settings.GraveSettings.getInstance().getReplaceableBlocks().contains(type)) {
-                // Found a place to put the sign — clear it if needed
-                signBlock.setType(Material.AIR);
-                break;
-            } else if (type.name().contains("SIGN")) {
-                // There's already a sign here — go up one block
-                signBlock = signBlock.getRelative(BlockFace.UP);
-            } else {
-                // Block is solid and not replaceable — try next block up
-                signBlock = signBlock.getRelative(BlockFace.UP);
+        Bukkit.getScheduler().runTaskLater(SignGraveStone.getInstance(), () -> {
+            while (checkLoc.getY() > minY) {
+                checkLoc.subtract(0, 1, 0);
+                Block block = checkLoc.getBlock();
+                if (block.getType().isSolid()) {
+                    deathLocation[0] = block.getLocation().add(0, 1, 0);
+                    break;
+                }
             }
 
-            // If we've reached an invalid height or hit the build limit, cancel
-            if (signBlock.getY() >= deathLocation.getWorld().getMaxHeight()) {
-                SignGraveStone.getInstance().getLogger().info("Couldn't place grave sign - max height reached!");
-                return;
+            Block signBlock = deathLocation[0].getBlock();
+
+            for (int i = 0; i < 5; i++) {
+                Material type = signBlock.getType();
+                if (type == Material.AIR || org.shyni.signGraveStone.settings.GraveSettings.getInstance().getReplaceableBlocks().contains(type)) {
+                    signBlock.setType(Material.AIR);
+                    break;
+                } else if (type.name().contains("SIGN")) {
+                    signBlock = signBlock.getRelative(BlockFace.UP);
+                } else {
+                    signBlock = signBlock.getRelative(BlockFace.UP);
+                }
+
+                if (signBlock.getY() >= deathLocation[0].getWorld().getMaxHeight()) {
+                    SignGraveStone.getInstance().getLogger().info("Couldn't place grave sign - max height reached!");
+                    return;
+                }
             }
-        }
 
+            signBlock.setType(Material.OAK_SIGN);
+            BlockData blockData = signBlock.getBlockData();
+            if (blockData instanceof org.bukkit.block.data.type.Sign signData) {
+                BlockFace face = getSignRotation(player.getLocation().getYaw());
+                signData.setRotation(face);
+                signBlock.setBlockData(signData);
+            }
 
+            Sign sign = (Sign) signBlock.getState();
+            String[] signLines = new String[] {
+                    ChatColor.BLACK + "R.I.P.",
+                    ChatColor.GREEN + player.getName(),
+                    ChatColor.YELLOW + deathMessage,
+                    ChatColor.RED + getFormattedDate()
+            };
 
-        // Set the block to a standing sign
-        signBlock.setType(Material.OAK_SIGN);
-        SignGraveStone.getInstance().getLogger().info("Death Yaw: " + deathLocation.getYaw());
-        // Configure the sign's rotation
-        BlockData blockData = signBlock.getBlockData();
-        if (blockData instanceof org.bukkit.block.data.type.Sign signData) {
-            BlockFace face = getSignRotation(player.getLocation().getYaw());
-            signData.setRotation(face);
-            signBlock.setBlockData(signData);
+            for (int i = 0; i < Math.min(4, signLines.length); i++) {
+                sign.setLine(i, signLines[i]);
+            }
 
-            SignGraveStone.getInstance().getLogger().info("Set sign rotation to: " + face);
-        }
+            sign.update(true, false);
+            graveSigns.add(signBlock.getLocation());
+        }, 20L);
 
-        // Get the Sign and set its text
-        Sign sign = (Sign) signBlock.getState();
-
-        String[] signLines = new String[] {
-                ChatColor.BLACK + "R.I.P.",
-                ChatColor.GREEN + player.getName(),
-                ChatColor.YELLOW + DeathMessageManager.getInstance().getCustomMessage(event.getDeathMessage(), player.getName()),
-                ChatColor.RED + getFormattedDate()
-        };
-
-        for (int i = 0; i < Math.min(4, signLines.length); i++) {
-            sign.setLine(i, signLines[i]);
-        }
-
-        sign.update(true, false);
-
-        // Add to our tracked grave signs
-        graveSigns.add(signBlock.getLocation());
     }
 
     @EventHandler
@@ -145,6 +135,16 @@ public class PlayerDeathListener implements Listener {
     private String getFormattedDate() {
         java.time.LocalDate date = java.time.LocalDate.now();
         return String.format("%02d/%02d/%04d", date.getDayOfMonth(), date.getMonthValue(), date.getYear());
+    }
+
+    @EventHandler(priority = EventPriority.LOW)
+    public void onEntityExplode(EntityExplodeEvent event) {
+        event.blockList().removeIf(block -> graveSigns.contains(block.getLocation()));
+    }
+
+    @EventHandler( priority = EventPriority.LOW)
+    public void onBlockExplode(BlockExplodeEvent event) {
+        event.blockList().removeIf(block -> graveSigns.contains(block.getLocation()));
     }
 
 }

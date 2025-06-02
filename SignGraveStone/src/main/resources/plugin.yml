@@ -1,5 +1,5 @@
 name: SignGraveStone
-version: '1.2.2'
+version: '1.2.3'
 main: org.shyni.signGraveStone.SignGraveStone
 api-version: '1.21'
 authors: [ Shyni ]
